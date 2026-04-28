@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { addRequest } from "../../services/requestService";
 import { auth } from "../../config/firebase.config";
+import { useNavigate } from "react-router-dom";
 
 export default function RequestHelp() {
+    const navigate = useNavigate();
     const [title, setTitle] = useState("");
     const [type, setType] = useState("food");
     const [urgency, setUrgency] = useState("medium");
@@ -59,6 +61,7 @@ export default function RequestHelp() {
             });
 
             alert("Request submitted successfully 🎉");
+            navigate("/my-requests");
 
             // Reset
             setTitle("");
@@ -83,6 +86,13 @@ export default function RequestHelp() {
                 <p className="text-sm text-green-600 mb-6">
                     Submit your request and we’ll connect you with volunteers.
                 </p>
+
+                <button
+                    onClick={() => navigate("/my-requests")}
+                    className="mb-4 text-sm text-emerald-600 underline"
+                >
+                    ← Go to My Requests
+                </button>
 
                 {/* Title */}
                 <div className="mb-4">

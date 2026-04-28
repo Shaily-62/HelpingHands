@@ -7,9 +7,12 @@ export default function MyRequests() {
 
   useEffect(() => {
     const fetchRequests = async () => {
+     const user = auth.currentUser;
+
+            if (!user) return; // 🔥 important
       const q = query(
         collection(db, "requests"),
-        where("createdBy", "==", auth.currentUser.uid)
+        where("createdBy", "==", user.uid)
       );
 
       const snapshot = await getDocs(q);

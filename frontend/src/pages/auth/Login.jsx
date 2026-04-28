@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { login } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
+import { db, auth } from "../../config/firebase.config";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Login() {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
@@ -16,20 +20,58 @@ export default function Login() {
 
     const handleLogin = async () => {
         const errs = validate();
-        if (Object.keys(errs).length) { setErrors(errs); return; }
+        if (Object.keys(errs).length) {
+            setErrors(errs);
+            return;
+        }
 
         setLoading(true);
         setErrors({});
+
         try {
+            // 🔐 Login user
             await login(email, password);
-            // redirect here, e.g. navigate("/dashboard")
+
+            const user = auth.currentUser;
+
+            // 📦 Fetch user data from Firestore
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+
+            if (!userDoc.exists()) {
+                throw new Error("User data not found");
+            }
+
+            const userData = userDoc.data();
+
+            // 🚀 REDIRECTION LOGIC
+
+            if (!userData.isProfileComplete) {
+                // 👇 Send to profile form
+                if (userData.role === "volunteer") {
+                    navigate("/volunteer-profile");
+                } else if (userData.role === "community") {
+                    navigate("/community-profile");
+                } else if (userData.role === "ngo") {
+                    navigate("/ngo-profile");
+                }
+            } else {
+                // 👇 Send to dashboard
+                if (userData.role === "volunteer") {
+                    navigate("/volunteer-dashboard");
+                } else if (userData.role === "community") {
+                    navigate("/request-help");
+                } else if (userData.role === "ngo") {
+                    navigate("/ngo-dashboard");
+                }
+            }
+
         } catch (err) {
-            // Firebase error codes → friendly messages
             const msg =
                 err.code === "auth/user-not-found" ? "No account found with this email." :
                     err.code === "auth/wrong-password" ? "Incorrect password. Try again." :
                         err.code === "auth/too-many-requests" ? "Too many attempts. Please wait a moment." :
                             err.message;
+
             setErrors({ submit: msg });
         } finally {
             setLoading(false);

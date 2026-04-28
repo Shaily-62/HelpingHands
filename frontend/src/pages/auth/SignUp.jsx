@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signup } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 const ROLES = [
     { value: "community", label: "Community", icon: "🏘" },
@@ -8,6 +9,7 @@ const ROLES = [
 ];
 
 export default function Signup() {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("community");
@@ -29,7 +31,15 @@ export default function Signup() {
         setErrors({});
         try {
             await signup(email, password, role);
-            alert("Account created successfully!");
+
+            // Redirect based on role
+            if (role === "volunteer") {
+                navigate("/volunteer-profile");
+            } else if (role === "community") {
+                navigate("/community-profile");
+            } else if (role === "ngo") {
+                navigate("/ngo-profile");
+            }
         } catch (err) {
             setErrors({ submit: err.message });
         } finally {
