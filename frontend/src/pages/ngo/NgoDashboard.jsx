@@ -66,6 +66,43 @@ export default function NGODashboard() {
         }
     };
 
+    const handleAutoAssign = async (reqId) => {
+        try {
+            setLoading(true);
+
+            const requestObj = requests.find(r => r.id === reqId);
+
+            if (!requestObj) {
+                alert("Request not found");
+                return;
+            }
+
+            const matched = getBestVolunteers(requestObj, volunteers);
+
+            if (matched.length === 0) {
+                alert("No suitable volunteers available");
+                return;
+            }
+
+            const bestVolunteer = matched[0];
+
+            // 🔥 OPTIONAL: Minimum score check
+            if (bestVolunteer.matchScore < 30) {
+                alert("No strong match found");
+                return;
+            }
+
+            await assignVolunteer(reqId, bestVolunteer.id);
+
+            alert(`Auto-assigned to ${bestVolunteer.name} ✅`);
+
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 🧠 Matching Logic
     const selectedReqObj = requests.find(r => r.id === selectedRequest);
 
@@ -146,6 +183,8 @@ export default function NGODashboard() {
                                     </span>
                                 </p>
 
+                             
+
                                 {/* Assigned */}
                                 <p className="text-xs text-gray-500 mb-3">
                                     Volunteer: {req.assignedVolunteer || "Not assigned"}
@@ -162,6 +201,18 @@ export default function NGODashboard() {
                                     `}
                                 >
                                     Assign Volunteer
+                                </button>
+
+                                   <button
+                                    onClick={() => handleAutoAssign(req.id)}
+                                    disabled={req.status !== "pending" || loading}
+                                    className={`px-4 py-2 text-sm rounded-lg ml-2
+        ${req.status !== "pending"
+                                            ? "bg-gray-300"
+                                            : "bg-green-600 text-white hover:bg-green-700"}
+    `}
+                                >
+                                    ⚡ Auto Assign
                                 </button>
 
                             </div>

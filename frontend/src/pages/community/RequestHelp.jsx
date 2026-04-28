@@ -2,6 +2,7 @@ import { useState } from "react";
 import { addRequest } from "../../services/requestService";
 import { auth } from "../../config/firebase.config";
 import { useNavigate } from "react-router-dom";
+import MapView from "../../components/Mapview";
 
 export default function RequestHelp() {
     const navigate = useNavigate();
@@ -9,6 +10,7 @@ export default function RequestHelp() {
     const [type, setType] = useState("food");
     const [urgency, setUrgency] = useState("medium");
     const [location, setLocation] = useState(null);
+    const [locLoading, setLocLoading] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // 📍 Get User Location
@@ -18,17 +20,19 @@ export default function RequestHelp() {
             return;
         }
 
+        setLocLoading(true);
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const coords = {
+                setLocation({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
-                };
-                setLocation(coords);
-                alert("Location captured ✅");
+                });
+                setLocLoading(false);
             },
-            (error) => {
+            () => {
                 alert("Location permission denied ❌");
+                setLocLoading(false);
             }
         );
     };
@@ -153,14 +157,19 @@ export default function RequestHelp() {
                     onClick={handleGetLocation}
                     className="w-full mb-3 py-2 bg-white border border-emerald-400 text-emerald-600 rounded-lg text-sm hover:bg-emerald-50 transition"
                 >
-                    📍 Use My Location
+                    {locLoading ? "Getting location..." : "📍 Use My Location"}
                 </button>
 
                 {/* Show location */}
                 {location && (
-                    <p className="text-xs text-green-600 mb-3">
-                        Location: {location.lat.toFixed(3)}, {location.lng.toFixed(3)}
-                    </p>
+                    <div className="mb-4">
+                        <p className="text-xs text-green-600 mb-2">
+                            Location: {location.lat.toFixed(3)}, {location.lng.toFixed(3)}
+                        </p>
+
+                        {/* 🗺️ MAP */}
+                        <MapView location={location} />
+                    </div>
                 )}
 
                 {/* Submit */}
