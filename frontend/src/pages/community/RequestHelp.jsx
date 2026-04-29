@@ -2,14 +2,16 @@ import { useState } from "react";
 import { addRequest } from "../../services/requestService";
 import { auth } from "../../config/firebase.config";
 import { useNavigate } from "react-router-dom";
-import MapView from "../../components/Mapview";
+import MapView from "../../components/MapView";
 
 export default function RequestHelp() {
     const navigate = useNavigate();
+
     const [title, setTitle] = useState("");
     const [type, setType] = useState("food");
     const [urgency, setUrgency] = useState("medium");
     const [location, setLocation] = useState(null);
+
     const [locLoading, setLocLoading] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -39,8 +41,13 @@ export default function RequestHelp() {
 
     // 🚀 Submit Request
     const handleSubmit = async () => {
-        if (!title) {
+        if (!title.trim()) {
             alert("Please enter a title");
+            return;
+        }
+
+        if (!auth.currentUser) {
+            alert("Please login first");
             return;
         }
 
@@ -48,11 +55,10 @@ export default function RequestHelp() {
             setLoading(true);
 
             await addRequest({
-                title,
+                title: title.trim(),
                 type,
                 urgency,
 
-                // 📍 Use real location or fallback
                 location: location || {
                     lat: 19.076,
                     lng: 72.877
@@ -65,11 +71,12 @@ export default function RequestHelp() {
             });
 
             alert("Request submitted successfully 🎉");
-            navigate("/my-requests");
 
             // Reset
             setTitle("");
             setLocation(null);
+
+            navigate("/my-requests");
 
         } catch (err) {
             alert(err.message);
@@ -79,18 +86,19 @@ export default function RequestHelp() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
 
-            <div className="w-full max-w-md sm:max-w-lg bg-white border border-green-100 rounded-2xl p-6 sm:p-8 md:p-10 shadow-md">
+            <div className="w-full max-w-md bg-white border border-green-100 rounded-2xl p-6 shadow-md">
 
                 {/* Heading */}
-                <h2 className="text-xl sm:text-2xl font-semibold text-green-800 mb-1">
+                <h2 className="text-xl font-semibold text-green-800 mb-1">
                     Request Help 🌿
                 </h2>
                 <p className="text-sm text-green-600 mb-6">
                     Submit your request and we’ll connect you with volunteers.
                 </p>
 
+                {/* Back */}
                 <button
                     onClick={() => navigate("/my-requests")}
                     className="mb-4 text-sm text-emerald-600 underline"
@@ -100,27 +108,27 @@ export default function RequestHelp() {
 
                 {/* Title */}
                 <div className="mb-4">
-                    <label className="block text-xs font-medium text-green-700 mb-1">
+                    <label className="text-xs text-green-700 mb-1 block">
                         Title
                     </label>
                     <input
                         type="text"
-                        placeholder="e.g. Need food supplies"
+                        placeholder="Need food supplies"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm border border-green-200 rounded-lg bg-green-50 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500"
+                        className="w-full px-4 py-2 border rounded-lg bg-green-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                     />
                 </div>
 
                 {/* Type */}
                 <div className="mb-4">
-                    <label className="block text-xs font-medium text-green-700 mb-1">
+                    <label className="text-xs text-green-700 mb-1 block">
                         Type of Help
                     </label>
                     <select
                         value={type}
                         onChange={(e) => setType(e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm border border-green-200 rounded-lg bg-green-50 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500"
+                        className="w-full px-4 py-2 border rounded-lg bg-green-50"
                     >
                         <option value="food">🍱 Food</option>
                         <option value="medical">💊 Medical</option>
@@ -130,7 +138,7 @@ export default function RequestHelp() {
 
                 {/* Urgency */}
                 <div className="mb-4">
-                    <label className="block text-xs font-medium text-green-700 mb-2">
+                    <label className="text-xs text-green-700 mb-2 block">
                         Urgency Level
                     </label>
 
@@ -140,34 +148,34 @@ export default function RequestHelp() {
                                 key={level}
                                 type="button"
                                 onClick={() => setUrgency(level)}
-                                className={`py-2 rounded-lg text-sm font-medium border transition
-                                ${urgency === level
+                                className={`py-2 rounded-lg border text-sm
+                                    ${urgency === level
                                         ? "bg-emerald-100 border-emerald-500 text-emerald-700"
-                                        : "bg-green-50 border-green-200 text-green-600 hover:border-emerald-300"
+                                        : "bg-green-50 border-green-200 text-green-600"
                                     }`}
                             >
-                                {level.charAt(0).toUpperCase() + level.slice(1)}
+                                {level}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                {/* 📍 Location Button */}
+                {/* Location */}
                 <button
                     onClick={handleGetLocation}
-                    className="w-full mb-3 py-2 bg-white border border-emerald-400 text-emerald-600 rounded-lg text-sm hover:bg-emerald-50 transition"
+                    disabled={locLoading}
+                    className="w-full mb-3 py-2 border border-emerald-400 text-emerald-600 rounded-lg text-sm hover:bg-emerald-50"
                 >
                     {locLoading ? "Getting location..." : "📍 Use My Location"}
                 </button>
 
-                {/* Show location */}
+                {/* Map */}
                 {location && (
                     <div className="mb-4">
                         <p className="text-xs text-green-600 mb-2">
-                            Location: {location.lat.toFixed(3)}, {location.lng.toFixed(3)}
+                            📍 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
                         </p>
 
-                        {/* 🗺️ MAP */}
                         <MapView location={location} />
                     </div>
                 )}
@@ -176,7 +184,7 @@ export default function RequestHelp() {
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition disabled:opacity-60"
                 >
                     {loading ? "Submitting..." : "Submit Request"}
                 </button>
